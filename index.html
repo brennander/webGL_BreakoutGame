@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>THREE.js Game Test</title>
+	<script src="js/three.min.js"></script>
+	<script src="js/THREEx.KeyboardState.js"></script>
+	<script src="js/jquery-2.1.0.min.js"></script>
+	<script src="js/threex.windowresize.js"></script>
+
+</head>
+<body style='margin: 0px; background-color: #222222; overflow: hidden;'>
+
+	<script type="text/javascript">
+	//three.js setup
+	var keyboard = new THREEx.KeyboardState();
+
+	var WIDTH = window.innerWidth;
+	var HEIGHT= window.innerHeight;
+
+	var VIEW_ANGLE = 45,
+		ASPECT = WIDTH / HEIGHT,
+		NEAR = 0.1,
+		FAR = 10000;
+
+	var renderer = new THREE.WebGLRenderer();
+	var camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR );
+
+	var scene = new THREE.Scene();
+
+	scene.add(camera);
+
+	camera.position.z = 1000;
+
+	renderer.setSize(WIDTH, HEIGHT);
+	renderer.setClearColorHex( 0x222222, 1 );
+
+	document.body.appendChild( renderer.domElement );
+
+	//declaring the rendering loop
+	var onRenderFcts = [];
+
+	var winResize = new THREEx.WindowResize(renderer, camera);
+
+	//creating the player
+	var playerMaterial = new THREE.MeshLambertMaterial( 
+		{
+			color: 0xffaa22,
+			ambient: 0xffaa22,			
+		});
+
+	var player = new THREE.Mesh(
+			new THREE.BoxGeometry(200, 25, 100),
+			playerMaterial);
+	
+	scene.add(player);
+	player.position.y = -250;
+	player.position.x = 0;
+
+	//lighting
+	var ambientLight = new THREE.AmbientLight ( 0x222222 );
+	scene.add(ambientLight);
+	var directionalLight = new THREE.DirectionalLight ( 0xffffff, 1);
+	directionalLight.position.set(0,1,0.1);
+	scene.add(directionalLight);
+
+	//controls
+	onRenderFcts.push(function(delta, now){
+		var speed = 300;
+
+		if ( keyboard.pressed('left') ) {
+			player.position.x -= speed * delta;
+		}else if( keyboard.pressed('right')) {
+			player.position.x += speed * delta;
+		}
+	});
+
+	//render loop
+
+	onRenderFcts.push(function(){
+		renderer.render(scene, camera);
+	});
+
+	var lastTimeMsec = null;
+	requestAnimationFrame(function animate(nowMsec){
+		requestAnimationFrame(animate);
+
+		lastTimeMsec = lastTimeMsec || nowMsec-1000/60
+		var deltaMsec = Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec = nowMsec
+
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	});
+
+	</script>
+
+</body>
+</html>
+<html>
