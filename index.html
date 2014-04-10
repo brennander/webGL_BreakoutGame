@@ -56,6 +56,25 @@
 	player.position.y = -250;
 	player.position.x = 0;
 
+	//creating the ball
+	var ballMaterial = new THREE.MeshBasicMaterial ({
+		color: 0xffffff,
+	});
+	var ball = new THREE.Mesh( new THREE.SphereGeometry(20), ballMaterial);
+	scene.add(ball);
+	ball.position.y = -200;
+
+	//creating the play field
+	var fieldMaterial = new THREE.MeshBasicMaterial ({
+		color: 0xaaff22,
+	});
+	var fieldWidth = 1500;
+	var fieldHeight = 800;
+	var playField = new THREE.Mesh( new THREE.PlaneGeometry(fieldWidth, fieldHeight, 15, 8), fieldMaterial);
+	scene.add(playField);
+	playField.position.z = -20;
+	playField.receiveShadows = true;
+
 	//lighting
 	var ambientLight = new THREE.AmbientLight ( 0x222222 );
 	scene.add(ambientLight);
@@ -64,7 +83,7 @@
 	scene.add(directionalLight);
 
 	//controls
-	onRenderFcts.push(function(delta, now){
+	onRenderFcts.push(function playerMovement (delta, now){
 		var speed = 300;
 
 		if ( keyboard.pressed('left') ) {
@@ -72,6 +91,38 @@
 		}else if( keyboard.pressed('right')) {
 			player.position.x += speed * delta;
 		};
+	});
+
+	//ball movement
+	var ballSpeed = 2;
+	var ballDirX = 1;
+	var ballDirY = 1;
+
+	onRenderFcts.push(function ballMovement (){
+		ball.position.x += ballDirX * ballSpeed;
+		ball.position.y += ballDirY * ballSpeed;
+
+		if (ballDirY > ballSpeed * 2) {
+			ballDirY = ballSpeed * 2;
+		} else if (ballDirY < -ballSpeed * 2) {
+			ballDirY = -ballSpeed * 2
+		};
+
+		if (ball.position.y >= fieldHeight / 2) {
+			ballDirY = -ballDirY;
+		};
+
+		if (ball.position.y <= - fieldHeight / 2) {
+			ballDirY = -ballDirY;
+		}
+
+		if (ball.position.x >= fieldWidth / 2) {
+			ballDirX = -ballDirX;
+		}
+
+		if (ball.position.x <= -fieldWidth / 2) {
+			ballDirX = -ballDirX;
+		}
 	});
 
 	//render loop
