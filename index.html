@@ -4,9 +4,8 @@
 
 	<title>THREE.js Game Test</title>
 	<script src="js/three.min.js"></script>
-	<script src="js/THREEx.KeyboardState.js"></script>
-	<script src="js/jquery-2.1.0.min.js"></script>
-	<script src="js/threex.windowresize.js"></script>
+	<script src="js/THREEx.keyboardstate.js"></script>
+	<script src="js/THREEx.windowresize.js"></script>
 
 </head>
 <body style='margin: 0px; background-color: #222222; overflow: hidden;'>
@@ -33,7 +32,7 @@
 	camera.position.z = 1000;
 
 	renderer.setSize(WIDTH, HEIGHT);
-	renderer.setClearColorHex( 0x222222, 1 );
+	renderer.setClearColor( 0x222222, 1 );
 
 	document.body.appendChild( renderer.domElement );
 
@@ -72,7 +71,7 @@
 			player.position.x -= speed * delta;
 		}else if( keyboard.pressed('right')) {
 			player.position.x += speed * delta;
-		}
+		};
 	});
 
 	//render loop
@@ -85,17 +84,16 @@
 	requestAnimationFrame(function animate(nowMsec){
 		requestAnimationFrame(animate);
 
-		lastTimeMsec = lastTimeMsec || nowMsec-1000/60
-		var deltaMsec = Math.min(200, nowMsec - lastTimeMsec)
-		lastTimeMsec = nowMsec
+		lastTimeMsec = lastTimeMsec || nowMsec-1000/60;
+		var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
+		lastTimeMsec = nowMsec;
 
 		onRenderFcts.forEach(function(onRenderFct){
-			onRenderFct(deltaMsec/1000, nowMsec/1000)
-		})
+			onRenderFct(deltaMsec/1000, nowMsec/1000);
+		});
 	});
 
 	</script>
 
 </body>
 </html>
-<html>
