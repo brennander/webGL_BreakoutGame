@@ -9,7 +9,7 @@
 
 </head>
 <body style='margin: 0px; background-color: #222222; overflow: hidden;'>
-
+	<div align="center" style="color: white; font-family: helvetica">Press space to start!</div>
 	<script type="text/javascript">
 	//three.js setup
 	var keyboard = new THREEx.KeyboardState();
@@ -48,44 +48,54 @@
 			ambient: 0xffaa22,			
 		});
 
+	var playerWidth = 200;
+	var playerHeight = 25;
+	var playerDepth = 50;
 	var player = new THREE.Mesh(
-			new THREE.BoxGeometry(200, 25, 100),
+			new THREE.BoxGeometry(playerWidth, playerHeight, playerDepth),
 			playerMaterial);
 	
 	scene.add(player);
 	player.position.y = -250;
-	player.position.x = 0;
+	player.position.z = 25;
 
 	//creating the ball
-	var ballMaterial = new THREE.MeshBasicMaterial ({
-		color: 0xffffff,
+	var ballRadius = 20;
+	var ballQuality = 10;
+	var ballMaterial = new THREE.MeshLambertMaterial ({
+		color: 0x22ff22,
+		ambient: 0x22ff22
 	});
-	var ball = new THREE.Mesh( new THREE.SphereGeometry(20), ballMaterial);
+	var ball = new THREE.Mesh( new THREE.SphereGeometry(ballRadius, ballQuality, ballQuality), ballMaterial);
 	scene.add(ball);
 	ball.position.y = -200;
 
 	//creating the play field
 	var fieldMaterial = new THREE.MeshBasicMaterial ({
-		color: 0xaaff22,
+		color: 0x333333,
 	});
 	var fieldWidth = 1500;
 	var fieldHeight = 800;
-	var playField = new THREE.Mesh( new THREE.PlaneGeometry(fieldWidth, fieldHeight, 15, 8), fieldMaterial);
+	var playField = new THREE.Mesh( new THREE.PlaneGeometry(fieldWidth, fieldHeight, fieldWidth / 100, fieldHeight / 100), fieldMaterial);
 	scene.add(playField);
-	playField.position.z = -20;
+	playField.position.z = -25;
 	playField.receiveShadows = true;
 
 	//lighting
 	var ambientLight = new THREE.AmbientLight ( 0x222222 );
 	scene.add(ambientLight);
-	var directionalLight = new THREE.DirectionalLight ( 0xffffff, 1);
-	directionalLight.position.set(0,1,0.1);
+	var directionalLight = new THREE.DirectionalLight ( 0xffcc44, 1);
+	directionalLight.position.set(0.5,1,0.5);
 	scene.add(directionalLight);
 
 	//controls
 	onRenderFcts.push(function playerMovement (delta, now){
 		var speed = 300;
-
+		if (player.position.x + 100 >= fieldWidth / 2) {
+			player.position.x -= 10;
+		} else if (player.position.x - 100 <= -fieldWidth / 2) {
+			player.position.x += 10;
+		}
 		if ( keyboard.pressed('left') ) {
 			player.position.x -= speed * delta;
 		}else if( keyboard.pressed('right')) {
@@ -94,35 +104,68 @@
 	});
 
 	//ball movement
-	var ballSpeed = 2;
+	var ballSpeed = 3;
 	var ballDirX = 1;
 	var ballDirY = 1;
+	
+	var playing = false;
 
-	onRenderFcts.push(function ballMovement (){
-		ball.position.x += ballDirX * ballSpeed;
-		ball.position.y += ballDirY * ballSpeed;
-
-		if (ballDirY > ballSpeed * 2) {
-			ballDirY = ballSpeed * 2;
-		} else if (ballDirY < -ballSpeed * 2) {
-			ballDirY = -ballSpeed * 2
+	//player collision physics
+	function playerCollision () {
+		if (ball.position.x <= player.position.x + playerWidth/2 && ball.position.x >= player.position.x - playerWidth/2) {
+			if (ball.position.y <= player.position.y + playerHeight/2 && ball.position.y >= player.position.y - playerHeight/2) {
+				if (ballDirY < 0) {
+					player.scale.x = 1.5;
+					ballDirY = -ballDirY;
+				};
+			};
 		};
 
-		if (ball.position.y >= fieldHeight / 2) {
+		//lerp back to original scale
+		player.scale.x += (1 - player.scale.x) * 0.2;
+	};
+
+	//play field ball collision
+	function ballCollision () {
+		
+		if (ball.position.y + ballRadius >= fieldHeight / 2) {
 			ballDirY = -ballDirY;
 		};
 
-		if (ball.position.y <= - fieldHeight / 2) {
+		if (ball.position.y -ballRadius <= - fieldHeight / 2) {
 			ballDirY = -ballDirY;
-		}
+		};
 
-		if (ball.position.x >= fieldWidth / 2) {
+		if (ball.position.x +ballRadius >= fieldWidth / 2) {
 			ballDirX = -ballDirX;
-		}
+		};
 
-		if (ball.position.x <= -fieldWidth / 2) {
+		if (ball.position.x -ballRadius <= -fieldWidth / 2) {
 			ballDirX = -ballDirX;
-		}
+		};
+	};
+
+	onRenderFcts.push(function ballPhysics (){
+		
+		//ball starts moving when space is pressed
+		if (keyboard.pressed('space')){
+			playing = true;
+		};
+
+		if (playing) {
+			ball.position.x += ballDirX * ballSpeed;
+			ball.position.y += ballDirY * ballSpeed;
+		};
+
+		//limiting ball X-axis speeds to 2 * the set speed
+		if (ballDirX > ballSpeed * 2) {
+			ballDirX = ballSpeed * 2;
+		} else if (ballDirX < -ballSpeed * 2) {
+			ballDirX = -ballSpeed * 2
+		};
+
+		ballCollision();
+		playerCollision();
 	});
 
 	//render loop
