@@ -69,6 +69,7 @@
 	var ball = new THREE.Mesh( new THREE.SphereGeometry(ballRadius, ballQuality, ballQuality), ballMaterial);
 	scene.add(ball);
 	ball.position.y = -200;
+	ball.position.z = 25;
 
 	//creating the play field
 	var fieldMaterial = new THREE.MeshBasicMaterial ({
@@ -80,6 +81,42 @@
 	scene.add(playField);
 	playField.position.z = -25;
 	playField.receiveShadows = true;
+
+	//creating a row of bricks
+	var bricks = [];
+	var brickContainer = new THREE.Object3D();
+	var brickRow = new THREE.Object3D();
+	var brickHeight = 50;
+	var brickWidth = 200;
+	var brickDepth = 50;
+	var rowHeight = 75;
+	var s = 1;
+	var rowWidth = 7;
+
+	var brickMat = new THREE.MeshLambertMaterial( { 
+		color: 0x2222ff,
+		ambient: 0x0000ff,
+	} );
+
+	var brickGeo = new THREE.BoxGeometry(brickWidth, brickHeight, brickDepth);
+
+	function addBrick(mat, i) {
+			var brickMesh = new THREE.Mesh(brickGeo, mat);
+			var brick = new THREE.Object3D();
+			brick.add(brickMesh);
+			bricks[i] = brick;
+
+	}
+	function addBrickRow(rowNum) {
+		for (s; s <= rowWidth; s++) {
+			addBrick(brickMat, s);
+			bricks[s].position.x = 250 * s;
+			brickRow.add(bricks[s]);
+		}
+
+		brickRow.position.y = rowNum * rowHeight
+	}
+
 
 	//lighting
 	var ambientLight = new THREE.AmbientLight ( 0x222222 );
