@@ -87,12 +87,11 @@
 	//creating a row of bricks
 	var bricks = [];
 	var brickContainer = new THREE.Object3D();
-	var brickRow = new THREE.Object3D();
+	var brickRow = [];
 	var brickHeight = 50;
 	var brickWidth = 200;
 	var brickDepth = 50;
 	var rowHeight = 75;
-	var s = 1;
 	var rowWidth = 7;
 
 	var brickMat = new THREE.MeshLambertMaterial( { 
@@ -102,23 +101,40 @@
 
 	var brickGeo = new THREE.BoxGeometry(brickWidth, brickHeight, brickDepth);
 
-	function addBrick(mat, i) {
+	function addBrick(mat) {
 			var brickMesh = new THREE.Mesh(brickGeo, mat);
 			var brick = new THREE.Object3D();
 			brick.add(brickMesh);
-			bricks[i] = brick;
+			bricks.push(brick);
+		};
 
-	}
 	function addBrickRow(rowNum) {
-		for (s; s <= rowWidth; s++) {
-			addBrick(brickMat, s);
-			bricks[s].position.x = 250 * s;
-			brickRow.add(bricks[s]);
-		}
+		var brickRowContainer = new THREE.Object3D();
 
-		brickRow.position.y = rowNum * rowHeight
-	}
+		for (var s = 0; s < rowWidth; s++) {
+			addBrick(brickMat);
+			bricks[s].position.x = 220 * (s + 1);
+			brickRow.push(bricks[s]);
+		};
 
+		brickRowContainer.add(brickRow);
+		brickRowContainer.position.y = rowNum * rowHeight;
+		brickRowContainer.position.z = 25;
+		brickContainer.add(brickRowContainer);
+
+	};
+
+	function initBricks(rows) {
+		for (var i = 1; i <= rows; i++) {
+			addBrickRow(i);
+		};
+		
+		brickContainer.position.y = (rows * rowHeight) + 400;
+		brickContainer.position.x = -700;
+		scene.add(brickContainer);
+	};
+
+	initBricks(3);
 
 	//lighting
 	var ambientLight = new THREE.AmbientLight ( 0x222222 );
