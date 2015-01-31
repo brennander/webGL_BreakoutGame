@@ -10,14 +10,14 @@
 
 </head>
 <body style='margin: 0px; background-color: #222222; overflow: hidden;'>
-	<div align="center" style="color: white; font-family: helvetica">Press space to start!</div>
-	<div align="center" style="color: red; font-family: helvetica"> Bounces : <span id="printHere"></span></div>
+	<div align="center" style="margin-top: 10px ; color: white; font-family: helvetica">Press space to start!</div>
+	<div align="center" style="color: #22ff22; font-family: helvetica"> Bounces : <span id="printHere"></span></div>
 	<script type="text/javascript">
 	//three.js setup
 	var keyboard = new THREEx.KeyboardState();
 
 	var WIDTH = window.innerWidth;
-	var HEIGHT= window.innerHeight;
+	var HEIGHT= window.innerHeight - 85;
 
 	var VIEW_ANGLE = 45,
 		ASPECT = WIDTH / HEIGHT,
@@ -85,6 +85,8 @@
 	playField.receiveShadows = true;
 
 	//creating a row of bricks
+
+	// TODO : Fix Brick Creation!!! //
 	var bricks = [];
 	var brickContainer = new THREE.Object3D();
 	var brickRow = new THREE.Object3D();
@@ -144,21 +146,28 @@
 
 	//ball movement
 	var ballSpeed = 3;
-	var ballDirX = 1;
 	var ballDirY = 1;
+	var ballDirX = -1 + (Math.random() * 2) ;
 	
+	//Playing state
 	var playing = false;
 
+	//Score Display
 	var score;
 	var scoreDisplay;
 
 	//player collision physics
 	function playerCollision () {
-		if (ball.position.x <= player.position.x + playerWidth/2 && ball.position.x >= player.position.x - playerWidth/2) {
-			if (ball.position.y <= player.position.y + playerHeight/2 && ball.position.y >= player.position.y - playerHeight/2) {
+		if (ball.position.x <= player.position.x + playerWidth/2 
+			&& ball.position.x >= player.position.x - playerWidth/2) 
+		{
+			if (ball.position.y <= player.position.y + playerHeight/2 
+				&& ball.position.y >= player.position.y - playerHeight/2) 
+			{
 				if (ballDirY < 0) {
 					player.scale.x = 1.5;
 					ballDirY = -ballDirY;
+					impactDir();
 					scoreNum();
 				};
 			};
@@ -168,6 +177,21 @@
 		player.scale.x += (1 - player.scale.x) * 0.2;
 	};
 
+	//compare X position of ball and player, and change ballDirX accordingly
+	function impactDir () {
+		var pX = player.position.x;
+		var bX = ball.position.x;
+
+		if (bX > pX) {
+			ballDirX = 1 * (pX / bX);
+		} else if ( bX < pX) {
+			ballDirX = -1 * (bX / pX);
+		} else if (bX == pX) {
+			ballDirX = 0;
+		};
+	};
+
+	//Score Display Update
 	function scoreNum (){
 		score += 1;
 		scoreDisplay = score.toFixed(0);
@@ -194,6 +218,7 @@
 		};
 	};
 
+	//Initalise game and set score to 0
 	function init () {
 		score = 0;
 	};
@@ -221,8 +246,6 @@
 		ballCollision();
 		playerCollision();
 	});
-
-	
 
 	//render loop
 
