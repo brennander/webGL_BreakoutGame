@@ -6,7 +6,7 @@
 	<script src="js/three.min.js"></script>
 	<script src="js/THREEx.keyboardstate.js"></script>
 	<script src="js/THREEx.windowresize.js"></script>
-	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="js/jquery-latest.min.js"></script>
 
 </head>
 <body style='margin: 0px; background-color: #222222; overflow: hidden;'>
@@ -177,18 +177,32 @@
 		player.scale.x += (1 - player.scale.x) * 0.2;
 	};
 
+	
 	//compare X position of ball and player, and change ballDirX accordingly
+
 	function impactDir () {
+		var ballIntersect_Relative;
+		var ballIntersect_Normalised;
+		
 		var pX = player.position.x;
 		var bX = ball.position.x;
+		var maxBounce = 5 * ( Math.PI() / 12 );
 
-		if (bX > pX) {
+		ballIntersect_Relative = (pX + 100) - bX;
+		ballIntersect_Normalised = ballIntersect_Relative / 100;
+
+		var bounceAngle = ballIntersect_Normalised * maxBounce;
+
+		ballDirX = Math.cos(bounceAngle);
+		ballDirY = -Math.sin(bounceAngle);
+
+		/* if (bX > pX) {
 			ballDirX = 1 * (pX / bX);
 		} else if ( bX < pX) {
 			ballDirX = -1 * (bX / pX);
 		} else if (bX == pX) {
 			ballDirX = 0;
-		};
+		};/= */
 	};
 
 	//Score Display Update
@@ -220,8 +234,11 @@
 
 	//Initalise game and set score to 0
 	function init () {
-		score = 0;
+		score = -1;
+		scoreNum();
 	};
+
+	init();
 
 	onRenderFcts.push(function ballPhysics (){
 		
