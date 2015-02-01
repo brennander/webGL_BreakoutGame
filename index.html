@@ -7,11 +7,12 @@
 	<script src="js/THREEx.keyboardstate.js"></script>
 	<script src="js/THREEx.windowresize.js"></script>
 	<script src="js/jquery-latest.min.js"></script>
+	<script src="js/threex.collider.js"></script>
 
 </head>
-<body style='margin: 0px; background-color: #222222; overflow: hidden;'>
+<body style='margin: 0px; background-color: #45ABFF; overflow: hidden;'>
 	<div align="center" style="margin-top: 10px ; color: white; font-family: helvetica">Press space to start!</div>
-	<div align="center" style="color: #22ff22; font-family: helvetica"> Bounces : <span id="printHere"></span></div>
+	<div align="center" style="color: #22ff22; font-family: helvetica"> Score = <span id="printHere"></span></div>
 	<script type="text/javascript">
 	//three.js setup
 	var keyboard = new THREEx.KeyboardState();
@@ -34,7 +35,7 @@
 	camera.position.z = 1000;
 
 	renderer.setSize(WIDTH, HEIGHT);
-	renderer.setClearColor( 0x222222, 1 );
+	renderer.setClearColor( 0x45ABFF, 1 );
 
 	document.body.appendChild( renderer.domElement );
 
@@ -46,8 +47,8 @@
 	//creating the player
 	var playerMaterial = new THREE.MeshLambertMaterial( 
 		{
-			color: 0xffaa22,
-			ambient: 0xffaa22,			
+			color: 0x666666,
+			ambient: 0x666666,			
 		});
 
 	var playerWidth = 200;
@@ -65,8 +66,8 @@
 	var ballRadius = 20;
 	var ballQuality = 10;
 	var ballMaterial = new THREE.MeshLambertMaterial ({
-		color: 0x22ff22,
-		ambient: 0x22ff22
+		color: 0xffaa22,
+		ambient: 0xffaa22
 	});
 	var ball = new THREE.Mesh( new THREE.SphereGeometry(ballRadius, ballQuality, ballQuality), ballMaterial);
 	scene.add(ball);
@@ -75,7 +76,7 @@
 
 	//creating the play field
 	var fieldMaterial = new THREE.MeshBasicMaterial ({
-		color: 0x333333,
+		color: 0x78C2FF,
 	});
 	var fieldWidth = 1500;
 	var fieldHeight = 800;
@@ -89,44 +90,49 @@
 	// TODO : Fix Brick Creation!!! //
 	var bricks = [];
 	var brickContainer = new THREE.Object3D();
-	var brickRow = new THREE.Object3D();
-	var brickHeight = 50;
+	var brickRows = [];
+	var brickHeight = 25;
 	var brickWidth = 200;
 	var brickDepth = 50;
-	var rowHeight = 75;
+	var rowHeight = 50;
 	var s = 1;
-	var rowWidth = 7;
+	var rowWidth = 6;
 
 	var brickMat = new THREE.MeshLambertMaterial( { 
-		color: 0x2222ff,
-		ambient: 0x0000ff,
+		color: 0x22ff77,
+		ambient: 0x22ff77,
 	} );
 
 	var brickGeo = new THREE.BoxGeometry(brickWidth, brickHeight, brickDepth);
 
-	function addBrick(mat, i) {
-			var brickMesh = new THREE.Mesh(brickGeo, mat);
-			var brick = new THREE.Object3D();
-			brick.add(brickMesh);
-			bricks[i] = brick;
+	function addBrick(i) {
+			bricks[i] = new THREE.Mesh(brickGeo, brickMat);
 
 	}
 	function addBrickRow(rowNum) {
-		for (s; s <= rowWidth; s++) {
-			addBrick(brickMat, s);
-			bricks[s].position.x = 250 * s;
-			brickRow.add(bricks[s]);
+		brickRows[rowNum] = new THREE.Object3D();
+
+		for (var s = (rowNum * 5); s < (rowWidth + ( rowNum * 5)); s++) {
+			addBrick(s);
+
+			bricks[s].position.x = 220 * (s - (rowNum * 5));
+
+			brickRows[rowNum].add(bricks[s]);
 		}
 
-		brickRow.position.y = rowNum * rowHeight
+		brickRows[rowNum].position.y = ((rowNum + 1) * rowHeight) + 250;
+		brickRows[rowNum].position.x = -550;
+		brickRows[rowNum].position.z = 25;
+		
+		brickContainer.add(brickRows[rowNum]);
 	}
 
 
 	//lighting
-	var ambientLight = new THREE.AmbientLight ( 0x222222 );
+	var ambientLight = new THREE.AmbientLight ( 0x888888 );
 	scene.add(ambientLight);
-	var directionalLight = new THREE.DirectionalLight ( 0xffcc44, 1);
-	directionalLight.position.set(0.5,1,0.5);
+	var directionalLight = new THREE.DirectionalLight ( 0xFAF9DE, 1);
+	directionalLight.position.set(0,0.5,0.75);
 	scene.add(directionalLight);
 
 	//controls
@@ -144,7 +150,7 @@
 		};
 	});
 
-	//ball movement
+	//ball movement setup
 	var ballSpeed = 3;
 	var ballDirY = 1;
 	var ballDirX = -1 + (Math.random() * 2) ;
@@ -156,8 +162,14 @@
 	var score;
 	var scoreDisplay;
 
+	//Collider System
+
+	var colliderSystem = new THREEx.ColliderSystem();
+
 	//player collision physics
 	function playerCollision () {
+
+
 		if (ball.position.x <= player.position.x + playerWidth/2 
 			&& ball.position.x >= player.position.x - playerWidth/2) 
 		{
@@ -166,8 +178,7 @@
 			{
 				if (ballDirY < 0) {
 					player.scale.x = 1.5;
-					ballDirY = -ballDirY;
-					impactDir();
+					impactDir("player");
 					scoreNum();
 				};
 			};
@@ -180,13 +191,32 @@
 	
 	//compare X position of ball and player, and change ballDirX accordingly
 
-	function impactDir () {
+	function impactDir (object) {
 		var ballIntersect_Relative;
 		var ballIntersect_Normalised;
 		
-		var pX = player.position.x;
+		if (object == "player") {
+			var pX = player.position.x;
+		} else if (object == "brick") {
+
+			for (var r in brickRows){
+			
+			if (ball.position.y <= brickRows[r].position.y + brickHeight/2 
+				&& ball.position.y >= brickRows[r].position.y - brickHeight/2) 
+			{
+				for (var i in brickRows[r].children) {
+					if (ball.position.x <= brickRows[r].children[i] + brickWidth / 2
+						&& ball.position.x >= brickRows[r].children[i]) {
+						
+							var pX = brickRows[r].children[i].position.x;
+						};
+					};
+				};
+			};
+		};
+
 		var bX = ball.position.x;
-		var maxBounce = 5 * ( Math.PI() / 12 );
+		var maxBounce = 5 * ( Math.PI / 12 );
 
 		ballIntersect_Relative = (pX + 100) - bX;
 		ballIntersect_Normalised = ballIntersect_Relative / 100;
@@ -194,15 +224,10 @@
 		var bounceAngle = ballIntersect_Normalised * maxBounce;
 
 		ballDirX = Math.cos(bounceAngle);
-		ballDirY = -Math.sin(bounceAngle);
+		ballDirY = Math.sin(bounceAngle);
 
-		/* if (bX > pX) {
-			ballDirX = 1 * (pX / bX);
-		} else if ( bX < pX) {
-			ballDirX = -1 * (bX / pX);
-		} else if (bX == pX) {
-			ballDirX = 0;
-		};/= */
+		ballSpeed += ballIntersect_Normalised * 2;
+		ballSpeedClamp();
 	};
 
 	//Score Display Update
@@ -217,28 +242,78 @@
 		
 		if (ball.position.y + ballRadius >= fieldHeight / 2) {
 			ballDirY = -ballDirY;
+			ballSpeed -= 0.2;
+			ballSpeedClamp();
 		};
 
 		if (ball.position.y -ballRadius <= - fieldHeight / 2) {
 			ballDirY = -ballDirY;
+			ballSpeed -= 0.2;
+			ballSpeedClamp();
 		};
 
 		if (ball.position.x +ballRadius >= fieldWidth / 2) {
 			ballDirX = -ballDirX;
+			ballSpeed -= 0.2;
+			ballSpeedClamp();
 		};
 
 		if (ball.position.x -ballRadius <= -fieldWidth / 2) {
 			ballDirX = -ballDirX;
+			ballSpeed -= 0.2;
+			ballSpeedClamp();
+		};
+	};
+
+	function brickCollision () {
+		var i = 0;
+
+		for (var r in brickRows){
+			
+			if (ball.position.y <= brickRows[r].position.y + brickHeight/2 
+				&& ball.position.y >= brickRows[r].position.y - brickHeight/2) 
+			{
+				for (var i in brickRows[r].children) {
+					if (ball.position.x <= brickRows[r].children[i] + brickWidth / 2
+						&& ball.position.x >= brickRows[r].children[i]) {
+						brickRows[r].remove(brickRows[r].children[i]);
+						impactDir("bricks");
+						scoreNum();
+					};
+				};
+			};
+			
+		};
+		
+	};
+
+	//Clamp the speed of the ball between 2 and 5
+
+	function ballSpeedClamp () {
+		if (ballSpeed > 5) {
+			ballSpeed = 5;
+		} else if (ballSpeed < 2) {
+			ballSpeed = 2;
 		};
 	};
 
 	//Initalise game and set score to 0
-	function init () {
+	function init (level) {
+		var rows = level;
 		score = -1;
 		scoreNum();
+
+		for (var i = 0; i < rows; i++) {
+			addBrickRow(i);
+		};
+
+		scene.add(brickContainer);
+
 	};
 
-	init();
+	init(2);
+
+	//Render!
 
 	onRenderFcts.push(function ballPhysics (){
 		
@@ -251,6 +326,10 @@
 		if (playing) {
 			ball.position.x += ballDirX * ballSpeed;
 			ball.position.y += ballDirY * ballSpeed;
+
+			ballCollision();
+			playerCollision();
+			brickCollision();
 		};
 
 		//limiting ball X-axis speeds to 2 * the set speed
@@ -260,8 +339,6 @@
 			ballDirX = -ballSpeed * 2
 		};
 
-		ballCollision();
-		playerCollision();
 	});
 
 	//render loop
@@ -269,6 +346,10 @@
 	onRenderFcts.push(function(){
 		renderer.render(scene, camera);
 	});
+
+	onRenderFcts.push(function(){
+		colliderSystem.computeAndNotify(colliders);
+	})
 
 	var lastTimeMsec = null;
 	requestAnimationFrame(function animate(nowMsec){
